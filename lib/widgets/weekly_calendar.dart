@@ -10,16 +10,24 @@ class WeeklyCalendar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Encabezado del calendario con el rango de fechas visible.
         const SectionHeading(
           title: 'Agenda de la semana',
           subtitle: 'Del 5 al 11 de octubre',
         ),
         const SizedBox(height: 16),
+
+        // El calendario cambia de distribución según el ancho disponible.
         LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth < 520) {
-              // En móvil se reservan cuatro celdas por fila: 4 + 3 días.
-              final cellWidth = (constraints.maxWidth - 24) / 4;
+              // En móviles muy estrechos puede quedar un ancho negativo si se
+              // intenta repartir más espacio del disponible. Clampear evita que
+              // el render falle en pantallas pequeñas o en pruebas de layout.
+              final cellWidth = ((constraints.maxWidth - 24) / 4).clamp(
+                0.0,
+                constraints.maxWidth,
+              );
               return Wrap(
                 key: const ValueKey('weekly-calendar-wrap'),
                 spacing: 8,
@@ -66,12 +74,14 @@ class _WeekdayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // El color del texto cambia si el día está seleccionado o no.
     final colorScheme = Theme.of(context).colorScheme;
     final foreground = day.isSelected
         ? colorScheme.onPrimary
         : colorScheme.onSurface;
 
     return Semantics(
+      // Descripción accesible para cada día, incluyendo si tiene actividad cultural.
       label: '${day.name} ${day.date}${day.hasEvent ? ', actividad cultural' : ''}',
       child: Container(
         height: 80,
@@ -84,6 +94,7 @@ class _WeekdayCell extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Nombre corto del día: Lun, Mar, Mié, etc.
             Text(
               day.name,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -92,6 +103,8 @@ class _WeekdayCell extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+
+            // Número del día para la agenda.
             Text(
               day.date,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -99,6 +112,8 @@ class _WeekdayCell extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+
+            // Indicador visual de que existe un evento cultural o actividad.
             SizedBox(
               width: 8,
               height: 8,
@@ -121,6 +136,7 @@ class _WeekdayCell extends StatelessWidget {
 }
 
 class _Weekday {
+  // Modelo interno para representar los días del calendario.
   const _Weekday(this.name, this.date, {this.isSelected = false, this.hasEvent = false});
 
   final String name;

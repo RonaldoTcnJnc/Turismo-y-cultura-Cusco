@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../models/guide_models.dart';
 
+// Este archivo guarda todo el contenido visible de la guía turística.
+// La información estática queda aquí para que los widgets solo se encarguen de dibujar.
+// De esta forma, el código queda más modular y fácil de mantener.
+
+// Lista principal de categorías que aparecen en el carrusel de inicio.
 const guideCategories = [
   GuideCategory(
     'Lugares',
@@ -25,6 +30,8 @@ const guideCategories = [
   ),
 ];
 
+// Cada sección representa un bloque de contenido de la app.
+// Por ejemplo: Lugares, Festividades y Gastronomía.
 const guideSections = [
   GuideSection(
     title: 'Lugares',

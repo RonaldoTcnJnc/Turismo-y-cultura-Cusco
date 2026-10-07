@@ -1,25 +1,36 @@
 import 'package:flutter/material.dart';
 
+// Importa el modelo de datos del contenido turístico.
 import '../models/guide_models.dart';
+// Importa el widget reutilizable para cargar imágenes locales.
 import 'guide_image.dart';
 
+// Esta tarjeta representa cada lugar, festival o experiencia dentro de una sección.
 class PlaceCard extends StatelessWidget {
+  // El constructor recibe el contenido del item y el color de la sección para dar estilo visual.
   const PlaceCard({required this.place, required this.sectionColor, super.key});
 
+  // Contenido del lugar o evento a mostrar.
   final GuidePlace place;
+  // Color de la sección para resaltar la etiqueta superior.
   final Color sectionColor;
 
   @override
   Widget build(BuildContext context) {
+    // Obtiene el esquema de colores del tema para armonizar los colores del texto y etiquetas.
     final colorScheme = Theme.of(context).colorScheme;
 
+    // ClipRRect recorta la imagen y el contenido para que las esquinas queden redondeadas.
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: Stack(
+        // Stack permite superponer imagen, gradiente, etiqueta y texto sobre la misma tarjeta.
         fit: StackFit.expand,
         children: [
+          // La imagen es el elemento base que representa el lugar.
           GuideImage(imagePath: place.imagePath),
           DecoratedBox(
+            // Añade un degradado oscuro para que el texto se vea bien sobre la foto.
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -33,6 +44,7 @@ class PlaceCard extends StatelessWidget {
               ),
             ),
           ),
+          // La etiqueta superior identifica la categoría o tipo de contenido.
           Positioned(
             top: 8,
             left: 8,
@@ -51,6 +63,7 @@ class PlaceCard extends StatelessWidget {
               ),
             ),
           ),
+          // El texto principal y los tags se ubican en la parte inferior.
           Positioned(
             left: 8,
             right: 8,
@@ -59,6 +72,7 @@ class PlaceCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Nombre del lugar o evento.
                 Text(
                   place.name,
                   maxLines: 2,
@@ -66,7 +80,10 @@ class PlaceCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium
                       ?.copyWith(color: Colors.white, fontSize: 16),
                 ),
+                // Separación del nombre con las etiquetas.
                 const SizedBox(height: 8),
+
+                // Wrap permite poner varias etiquetas pequeñas en varias líneas si hace falta.
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,

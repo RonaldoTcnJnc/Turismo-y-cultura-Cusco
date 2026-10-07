@@ -4,6 +4,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guia_turistica_cusco/main.dart';
 
 void main() {
+  testWidgets('no genera restricciones negativas en el calendario semanal', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(12, 900);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const CuscoGuideApp());
+    await tester.pump();
+
+    expect(find.text('Agenda de la semana'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('muestra la guía y adapta las columnas sin overflow', (
     tester,
   ) async {
