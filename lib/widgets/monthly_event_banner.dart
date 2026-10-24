@@ -3,8 +3,16 @@ import 'package:flutter/material.dart';
 // Este widget crea un banner promocional para destacar un evento importante del mes.
 // Sirve como bloque editorial que resalta una fiesta o celebración del Cusco.
 class MonthlyEventBanner extends StatelessWidget {
-  // Constructor constante.
-  const MonthlyEventBanner({super.key});
+  const MonthlyEventBanner({
+    required this.title,
+    required this.description,
+    required this.dateLabel,
+    super.key,
+  });
+
+  final String title;
+  final String description;
+  final String dateLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -35,17 +43,15 @@ class MonthlyEventBanner extends StatelessWidget {
           Text(
             'EVENTO DEL MES',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.labelLarge
+                ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
           ),
           // Espacio entre la etiqueta y el nombre del evento.
           const SizedBox(height: 8),
 
           // Nombre principal del evento promocionado.
           Text(
-            'Inti Raymi',
+            title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineMedium
                 ?.copyWith(color: Colors.white, fontSize: 28),
@@ -55,7 +61,7 @@ class MonthlyEventBanner extends StatelessWidget {
 
           // Descripción breve del evento con fecha y contexto cultural.
           Text(
-            '24 de junio · Una celebración al sol que llena la ciudad de historia.',
+            '$dateLabel · $description',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium
                 ?.copyWith(color: Colors.white),

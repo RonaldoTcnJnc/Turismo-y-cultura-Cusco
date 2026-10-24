@@ -6,8 +6,10 @@ import 'guide_image.dart';
 // Este widget representa la portada principal de la guía turística del Cusco.
 // Tiene una imagen de fondo, un filtro oscuro y un bloque de texto con buscador.
 class GuideHero extends StatelessWidget {
-  // Constructor constante del widget.
-  const GuideHero({super.key});
+  const GuideHero({this.onSearchChanged, this.onMapTap, super.key});
+
+  final ValueChanged<String>? onSearchChanged;
+  final VoidCallback? onMapTap;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +46,16 @@ class GuideHero extends StatelessWidget {
                 ),
               ),
             ),
+            if (onMapTap != null)
+              Positioned(
+                top: 12,
+                right: 12,
+                child: IconButton.filledTonal(
+                  tooltip: 'Ver mapa de lugares',
+                  onPressed: onMapTap,
+                  icon: const Icon(Icons.map_outlined),
+                ),
+              ),
             // Padding genera espacio interno para separar el contenido del borde del hero.
             Padding(
               padding: const EdgeInsets.all(24),
@@ -77,6 +89,7 @@ class GuideHero extends StatelessWidget {
                   // El buscador visual ayuda a simular una interfaz real de app de turismo.
                   TextField(
                     textInputAction: TextInputAction.search,
+                    onChanged: onSearchChanged,
                     decoration: InputDecoration(
                       // Icono de búsqueda en la izquierda del campo.
                       prefixIcon: Icon(

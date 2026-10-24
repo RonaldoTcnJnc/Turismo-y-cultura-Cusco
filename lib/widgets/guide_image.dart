@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'local_image_provider.dart';
+
 // Este widget reutilizable carga una imagen local desde assets.
 // Se usa en diversas tarjetas para evitar repetir la lógica de carga de imágenes.
 class GuideImage extends StatelessWidget {
@@ -12,13 +14,29 @@ class GuideImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Image.asset carga un recurso local desde la carpeta assets.
-    return Image.asset(
-      // La ruta del archivo se recibe como parámetro para reusarse en cualquier parte.
-      imagePath,
-      // BoxFit.cover hace que la imagen cubra el espacio disponible sin deformarse.
+    Widget buildPlaceholder(
+      BuildContext context,
+      Object error,
+      StackTrace? stackTrace,
+    ) => _placeholder(context);
+    if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+        errorBuilder: buildPlaceholder,
+      );
+    }
+    if (imagePath.startsWith('data:image/')) {
+      return Image.memory(
+        UriData.parse(imagePath).contentAsBytes(),
+        fit: BoxFit.cover,
+        errorBuilder: buildPlaceholder,
+      );
+    }
+    return Image(
+      image: localImageProvider(imagePath),
       fit: BoxFit.cover,
-      // Si la imagen no existe o falla, se sustituye por un placeholder visual.
-      errorBuilder: (context, error, stackTrace) => _placeholder(context),
+      errorBuilder: buildPlaceholder,
     );
   }
 

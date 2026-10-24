@@ -1,59 +1,111 @@
-# Proyecto 5: Guía turística y cultural del Cusco
+# Guía turística y cultural del Cusco
 
-Aplicación Flutter de interfaz estática para la Sesión 6 de Desarrollo de Software II (UNSAAC, IF616AIN). La pantalla principal reúne lugares, festividades y gastronomía; los controles son visuales y no ejecutan acciones.
+**Curso:** Desarrollo de Software II (IF616AIN), UNSAAC, 2026-II  
+**Proyecto:** Proyecto 5, Guía Práctica 02, Sesión 7  
+**Integrantes:** [Completar nombres y roles]  
+**Repositorio de entrega:** `dsii-sesion7-guia-cusco`
 
-## Ejecutar y validar
+Aplicación Flutter que conserva la interfaz de exploración de la Sesión 6 y añade persistencia local, búsqueda, filtros, operaciones CRUD, favoritos, mapa y selección de fotografías.
 
-Desde esta carpeta:
+## Integrantes y roles
 
-```powershell
+| Integrante | Rol y responsabilidades |
+|---|---|
+| [Apellido, Nombre] | [Modelos, SQLite y repositorios] |
+| [Apellido, Nombre] | [Pantallas, navegación y formularios] |
+| [Apellido, Nombre] | [Sensores, pruebas y documentación] |
+
+Ajustar la tabla a los integrantes reales antes de entregar.
+
+## Persistencia y datos de prueba
+
+SQLite es la fuente de verdad para lugares, festividades y platos. La base se crea en el primer inicio, aplica índices/restricciones y se inicializa con 6 lugares, 4 festividades y 5 platos. La versión actual del esquema es 1. `onUpgrade` contiene un ejemplo concreto para la futura versión 2: añadir `fuente TEXT` a `lugares`; para activarlo, incrementar `databaseVersion` y agregar esa columna también a la creación de bases nuevas.
+
+- Android: `sqflite` en el almacenamiento privado de la app.
+- Linux: `sqflite_common_ffi`; el sistema necesita `libsqlite3`.
+- Web: `sqflite_common_ffi_web`, que guarda el archivo SQLite en IndexedDB. La persistencia web depende del mismo navegador y origen/puerto.
+- SharedPreferences se reserva para favoritos (`tipo:id`), sección activa y último filtro. El perfil es temporal durante la sesión; las claves de perfil antiguas se eliminan al acceder al servicio.
+
+Los días de Corpus Christi, Qoyllur Rit’i y Señor de los Temblores en la semilla son referenciales porque esas fechas cambian según el calendario religioso. Inti Raymi se registra el 24 de junio.
+
+## Sensores, mapa y privacidad
+
+La ubicación solo se solicita al abrir el mapa y después de explicar su finalidad. Si se niega el permiso o la ubicación no está disponible, la lista se mantiene y las distancias se ocultan. Cuando existe posición, los lugares con coordenadas se ordenan por distancia; se muestra `m` por debajo de 1000 m y `km` en los demás casos.
+
+El mapa usa tiles de OpenStreetMap, sin API key, requiere conexión y muestra atribución a sus colaboradores. La lista ordenada por cercanía es el respaldo si los tiles no cargan.
+
+Las fotografías elegidas se copian a `documents/imagenes/` en plataformas IO. En web se guardan como URI de datos en la base local del navegador. La posición actual no se almacena en la base.
+
+## Requisitos
+
+- Flutter stable y Dart indicados por `pubspec.yaml`.
+- Android Studio y Android SDK si se ejecuta en emulador o dispositivo Android.
+- Para Linux desktop: CMake, Ninja, GTK y biblioteca SQLite (`libsqlite3`). En CachyOS/Arch se pueden instalar, si faltan, con `sudo pacman -S cmake ninja gtk3 sqlite`.
+- Para web: Chromium o Chrome. La base web requiere que el navegador permita IndexedDB y workers.
+
+Chrome y Linux son destinos de desarrollo; no se necesita Windows para crear o probar el APK Android.
+
+## Ejecutar
+
+En la raíz del proyecto:
+
+```fish
 flutter pub get
+flutter devices
+```
+
+Android, usando el ID que muestre `flutter devices`:
+
+```fish
+flutter run -d emulator-5554
+```
+
+Web:
+
+```fish
 flutter run -d chrome
 ```
 
-Para validar el código y los breakpoints:
+Linux desktop:
 
-```powershell
+```fish
+flutter run -d linux
+```
+
+Después de agregar o actualizar plugins, detén la ejecución anterior y usa `flutter run` para reconstruir; hot reload no reemplaza una reconstrucción nativa.
+
+## Verificación
+
+Última verificación local (23 de octubre de 2026): `flutter analyze` sin issues, `flutter test` con 25 pruebas aprobadas y builds debug exitosos para Android, web y Linux. El build Android emitió advertencias de Java/Gradle y deprecación de geolocator, pero generó el APK.
+
+```fish
 flutter analyze
 flutter test
+flutter build apk --debug
+flutter build web --debug
+flutter build linux --debug
 ```
 
-Breakpoints: con menos de 520 dp disponibles, las rejillas temáticas usan 2 columnas, las métricas 2 columnas y el calendario semanal se acomoda en dos filas con `Wrap` (4 + 3 días). Desde 520 dp, las rejillas usan 3 columnas hasta 959 dp y 4 desde 960 dp; las métricas usan 4 columnas y el calendario presenta los siete días en una fila.
+La semilla y los repositorios tienen pruebas de SQLite en memoria. Las pruebas de UI usan repositorios falsos para evitar acoplar Flutter Widget Test al isolate FFI.
 
-La entrada de la aplicación está en [lib/main.dart](lib/main.dart). La interfaz se organiza por responsabilidad en `lib/app.dart`, `lib/theme/`, `lib/models/`, `lib/data/`, `lib/pages/` y `lib/widgets/`. Las fotografías reales se guardan en `assets/images/` por portada, categorías, lugares, festividades y gastronomía. `lib/data/` conserva únicamente las listas y rutas locales que usa la interfaz; la pantalla no descarga imágenes de la red.
+## Evidencias
 
-Coloca los archivos con estos nombres para que se carguen automáticamente:
+Guardar las capturas reales en `evidencias/`, por ejemplo:
 
-- `portada/cusco_portada.jpg`
-- `categorias/lugares.jpg`, `festividades.jpg`, `gastronomia.jpg`, `tradiciones.jpg`
-- `lugares/machu_picchu.jpg`, `sacsayhuaman.jpg`, `plaza_de_armas.jpg`, `valle_sagrado.jpg`
-- `festividades/inti_raymi.jpg`, `corpus_christi.jpg`, `virgen_del_carmen.jpg`, `feria_de_pisac.jpg`
-- `gastronomia/chiri_uchu.jpg`, `costillar_frutillada.jpg`, `anticuchos_cusquenos.jpg`, `quesos_cusquenos.jpg`
+- `01-lista-y-semilla.png`
+- `02-alta-y-validacion.png`
+- `03-detalle-y-favorito.png`
+- `04-mapa-sin-permiso.png`
+- `05-persistencia-tras-reinicio.png`
 
-Las fotografías incluidas tienen sus créditos y licencias en [assets/images/ATRIBUTOS.md](assets/images/ATRIBUTOS.md). Después de reemplazar o agregar imágenes, ejecuta `flutter pub get` y vuelve a iniciar la aplicación.
+Las evidencias deben capturarse en el emulador/dispositivo durante la demostración; no se incluyen capturas ficticias en este repositorio.
 
-## Capturas adaptativas
+## Documentos de entrega
 
-1. Ejecuta la app en Chrome y abre las herramientas de desarrollador con `F12`.
-2. Activa la barra de dispositivos con `Ctrl+Shift+M` e ingresa `320 × 900` para evidenciar dos columnas, métricas 2×2 y calendario en dos filas.
-3. Cambia el viewport a `1280 × 900` para evidenciar cuatro columnas, métricas en una fila y los siete días en una fila. Opcionalmente captura `800 × 900` para mostrar tres columnas en las secciones.
-4. Guarda las imágenes en `evidencias/` como `01-movil-320.png`, `02-ancho-1280.png` y, opcionalmente, `03-intermedio-800.png`.
+- [Informe técnico Sesión 7](informe_sesion7.md)
+- [Guion de demostración](guion_demo_sesion7.md)
+- [Checklist de entrega](checklist_entrega_sesion7.md)
+- [Atribuciones de imágenes](assets/images/ATRIBUTOS.md)
+- [Informe de Sesión 6](informe_proyecto_sesion6.md), conservado como antecedente
 
-## Reparto sugerido (3 a 4 integrantes)
-
-- Diseño de interfaz: jerarquía visual, paleta y selección de imágenes.
-- Construcción de widgets: hero, carrusel, encabezados, tarjetas y evento destacado.
-- Verificación de layout: anchos de 320, 800 y 1200 px; contraste, consola y overflow.
-- Documentación y entrega: informe, capturas, revisión final y empaquetado. Con tres integrantes, combinar este rol con diseño.
-
-## Preparar el ZIP
-
-Desde PowerShell, entra primero a esta carpeta y limpia los artefactos locales; después regresa a la carpeta padre y crea el archivo:
-
-```powershell
-flutter clean
-Set-Location ..
-Compress-Archive -Path .\Sesion06_Guia_Turistica_Cusco -DestinationPath .\ApellidoNombre_ProyectoSesion6.zip -Force
-```
-
-Incluye las capturas en `evidencias/` antes de crear el ZIP. Reemplaza `ApellidoNombre` por los apellidos y nombres acordados por el grupo. El informe está en [informe_proyecto_sesion6.md](informe_proyecto_sesion6.md).
+Completar nombres/roles, URL del repositorio y evidencias antes de generar el ZIP.

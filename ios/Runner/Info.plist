@@ -2,6 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>La ubicación se usa para centrar el mapa y ordenar lugares cercanos mientras consultas la guía.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>La cámara permite tomar una fotografía para adjuntarla a un lugar, festividad o plato.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>La galería permite elegir una fotografía para adjuntarla a un contenido de la guía.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>La aplicación guarda la copia de la fotografía elegida en su almacenamiento privado.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
