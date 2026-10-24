@@ -5,7 +5,7 @@
 **Integrantes:** [Completar nombres y roles]  
 **Repositorio de entrega:** `dsii-sesion7-guia-cusco`
 
-Aplicación Flutter que conserva la interfaz de exploración de la Sesión 6 y añade persistencia local, búsqueda, filtros, operaciones CRUD, favoritos, mapa y selección de fotografías.
+Aplicación Flutter que conserva la interfaz de exploración de la Sesión 6 y añade persistencia local, búsqueda, filtros, operaciones CRUD, favoritos, mapa y aportes fotográficos. Las tarjetas del carrusel abren el listado de su categoría. «Evento del mes» elige la festividad futura más próxima usando la fecha actual del dispositivo.
 
 ## Integrantes y roles
 
@@ -19,7 +19,7 @@ Ajustar la tabla a los integrantes reales antes de entregar.
 
 ## Persistencia y datos de prueba
 
-SQLite es la fuente de verdad para lugares, festividades y platos. La base se crea en el primer inicio, aplica índices/restricciones y se inicializa con 6 lugares, 4 festividades y 5 platos. La versión actual del esquema es 1. `onUpgrade` contiene un ejemplo concreto para la futura versión 2: añadir `fuente TEXT` a `lugares`; para activarlo, incrementar `databaseVersion` y agregar esa columna también a la creación de bases nuevas.
+SQLite es la fuente de verdad para lugares, festividades y platos. Una instalación nueva aplica índices y restricciones, y se inicializa con 6 lugares, 15 festividades y 5 platos. La versión actual del esquema es 7. Las migraciones incrementales preservan el contenido existente; `lugares_imagenes` almacena fotografías aportadas por visitantes sin modificar la portada de `lugares.ruta_imagen`, y sus filas se eliminan en cascada junto con el lugar.
 
 - Android: `sqflite` en el almacenamiento privado de la app.
 - Linux: `sqflite_common_ffi`; el sistema necesita `libsqlite3`.
@@ -34,7 +34,7 @@ La ubicación solo se solicita al abrir el mapa y después de explicar su finali
 
 El mapa usa tiles de OpenStreetMap, sin API key, requiere conexión y muestra atribución a sus colaboradores. La lista ordenada por cercanía es el respaldo si los tiles no cargan.
 
-Las fotografías elegidas se copian a `documents/imagenes/` en plataformas IO. En web se guardan como URI de datos en la base local del navegador. La posición actual no se almacena en la base.
+Las fotografías elegidas se copian a `documents/imagenes/` en plataformas IO. En web se guardan como URI de datos en la base local del navegador. La cámara del formulario permite elegir una imagen para el contenido; desde el detalle de un lugar, cualquier visitante puede aportar fotos adicionales, que se muestran en una galería y no reemplazan la portada. La posición actual no se almacena en la base.
 
 ## Requisitos
 
@@ -76,7 +76,7 @@ Después de agregar o actualizar plugins, detén la ejecución anterior y usa `f
 
 ## Verificación
 
-Última verificación local (23 de octubre de 2026): `flutter analyze` sin issues, `flutter test` con 25 pruebas aprobadas y builds debug exitosos para Android, web y Linux. El build Android emitió advertencias de Java/Gradle y deprecación de geolocator, pero generó el APK.
+Verificación funcional más reciente (24 de octubre de 2026): `flutter analyze` sin issues y `flutter test` con 39 pruebas aprobadas. El APK debug se instaló y ejecutó en un dispositivo Android durante la validación de la app. Builds debug anteriores para web y Linux se registraron el 23 de octubre; no se repitieron en esta verificación.
 
 ```fish
 flutter analyze

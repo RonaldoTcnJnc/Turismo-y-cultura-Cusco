@@ -4,6 +4,7 @@ import 'package:guia_turistica_cusco/data/contenido_repository.dart';
 import 'package:guia_turistica_cusco/models/contenido.dart';
 import 'package:guia_turistica_cusco/models/lugar.dart';
 import 'package:guia_turistica_cusco/screens/contenido_form_screen.dart';
+import 'package:guia_turistica_cusco/services/role_session.dart';
 
 void main() {
   Future<void> scrollToSave(WidgetTester tester) async {
@@ -70,6 +71,7 @@ Widget _formHost(_FormRepository repository) => MaterialApp(
               builder: (_) => ContenidoFormScreen(
                 categoria: TipoContenido.lugar,
                 repository: repository,
+                roleSession: RoleSession()..selectRole(UserRole.collaborator),
               ),
             ),
           );

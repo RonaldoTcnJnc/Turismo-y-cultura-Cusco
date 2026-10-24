@@ -7,6 +7,7 @@ import '../models/festividad.dart';
 import '../models/lugar.dart';
 import '../models/plato.dart';
 import '../services/camara_service.dart';
+import '../services/role_session.dart';
 import '../utils/constantes.dart';
 import '../utils/validadores.dart';
 import '../widgets/guide_image.dart';
@@ -16,12 +17,14 @@ class ContenidoFormScreen extends StatefulWidget {
     required this.categoria,
     this.contenido,
     this.repository,
+    required this.roleSession,
     super.key,
   });
 
   final TipoContenido categoria;
   final Contenido? contenido;
   final ContenidoRepository? repository;
+  final RoleSession roleSession;
 
   @override
   State<ContenidoFormScreen> createState() => _ContenidoFormScreenState();
@@ -140,6 +143,7 @@ class _ContenidoFormScreenState extends State<ContenidoFormScreen> {
   }
 
   Future<void> _guardar() async {
+    if (!widget.roleSession.canManageContent) return;
     FocusScope.of(context).unfocus();
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
@@ -250,6 +254,20 @@ class _ContenidoFormScreenState extends State<ContenidoFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.roleSession.canManageContent) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Acceso restringido')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Cambia al modo Colaborador desde Perfil para gestionar contenido.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(

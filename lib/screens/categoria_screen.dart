@@ -2,15 +2,25 @@ import 'package:flutter/material.dart';
 
 import '../data/contenido_repository.dart';
 import '../models/contenido.dart';
+import '../models/festividad.dart';
+import '../models/guide_models.dart';
+import '../models/lugar.dart';
+import '../models/plato.dart';
 import '../navigation/route_arguments.dart';
 import '../services/preferencias_service.dart';
+import '../services/role_session.dart';
 import '../utils/constantes.dart';
-import '../widgets/contenido_list_tile.dart';
+import '../widgets/place_card.dart';
 
 class CategoriaScreen extends StatefulWidget {
-  const CategoriaScreen({required this.categoria, super.key});
+  const CategoriaScreen({
+    required this.categoria,
+    required this.roleSession,
+    super.key,
+  });
 
   final TipoContenido categoria;
+  final RoleSession roleSession;
 
   @override
   State<CategoriaScreen> createState() => _CategoriaScreenState();
@@ -39,13 +49,12 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
     _restoreFilter();
   }
 
-  Future<List<Contenido>> _load() =>
-      _repository.listar(
-        widget.categoria,
-        texto: _query,
-        distrito: _district,
-        mes: _month,
-      );
+  Future<List<Contenido>> _load() => _repository.listar(
+    widget.categoria,
+    texto: _query,
+    distrito: _district,
+    mes: _month,
+  );
 
   Future<void> _restoreFilter() async {
     try {
@@ -121,6 +130,10 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
   }
 
   Future<void> _addContent() async {
+    if (!widget.roleSession.canManageContent) {
+      _showError('Solo el modo Colaborador puede agregar contenido.');
+      return;
+    }
     try {
       final saved = await Navigator.pushNamed<Contenido>(
         context,
@@ -190,13 +203,12 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
                   child: Text('Todos los distritos'),
                 ),
                 ...DatosFormulario.kDistritos.map(
-                  (district) => DropdownMenuItem(
-                    value: district,
-                    child: Text(district),
-                  ),
+                  (district) =>
+                      DropdownMenuItem(value: district, child: Text(district)),
                 ),
               ],
-              onChanged: (value) => _changeFilter(district: value, month: _month),
+              onChanged: (value) =>
+                  _changeFilter(district: value, month: _month),
             ),
           ),
         if (widget.categoria == TipoContenido.festividad)
@@ -250,25 +262,43 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
                   message: Textos.kListaVacia,
                 );
               }
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
-                itemCount: contents.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) => ContenidoListTile(
-                  contenido: contents[index],
-                  onTap: () => _openDetail(contents[index]),
-                ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = switch (constraints.maxWidth) {
+                    < 520 => 2,
+                    < 960 => 3,
+                    _ => 4,
+                  };
+                  final color = Theme.of(context).colorScheme.primary;
+                  return GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+                    itemCount: contents.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: columns,
+                      mainAxisExtent: Dimensiones.kAlturaTarjeta,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    itemBuilder: (context, index) => PlaceCard(
+                      place: _toGuidePlace(contents[index]),
+                      sectionColor: color,
+                      onTap: () => _openDetail(contents[index]),
+                    ),
+                  );
+                },
               );
             },
           ),
         ),
       ],
     ),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _addContent,
-      icon: const Icon(Icons.add),
-      label: const Text('Agregar'),
-    ),
+    floatingActionButton: widget.roleSession.canManageContent
+        ? FloatingActionButton.extended(
+            onPressed: _addContent,
+            icon: const Icon(Icons.add),
+            label: const Text('Agregar'),
+          )
+        : null,
   );
 
   String _monthName(int month) => const [
@@ -285,6 +315,26 @@ class _CategoriaScreenState extends State<CategoriaScreen> {
     'Noviembre',
     'Diciembre',
   ][month - 1];
+
+  GuidePlace _toGuidePlace(Contenido content) {
+    final category = switch (content) {
+      Lugar value => value.distrito,
+      Festividad value => '${value.dia}/${value.mes}',
+      Plato value => value.tipo,
+      _ => widget.categoria.clave,
+    };
+    final fallbackImage = switch (widget.categoria) {
+      TipoContenido.lugar => 'assets/images/categorias/lugares.jpg',
+      TipoContenido.festividad => 'assets/images/categorias/festividades.jpg',
+      TipoContenido.plato => 'assets/images/categorias/gastronomia.jpg',
+    };
+    return GuidePlace(
+      name: content.nombre,
+      category: category,
+      imagePath: content.rutaImagen ?? fallbackImage,
+      tags: [widget.categoria.clave],
+    );
+  }
 }
 
 class _ListState extends StatelessWidget {

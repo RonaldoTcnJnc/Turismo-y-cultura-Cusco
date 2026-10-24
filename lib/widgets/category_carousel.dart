@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 // Importa las categorías desde la base de datos local del contenido.
@@ -11,7 +13,9 @@ import 'section_heading.dart';
 // Muestra una serie de tarjetas, cada una con una imagen, un icono y el nombre de la categoría.
 class CategoryCarousel extends StatelessWidget {
   // Constructor constante del widget.
-  const CategoryCarousel({super.key});
+  const CategoryCarousel({this.onCategoryTap, super.key});
+
+  final FutureOr<void> Function(String categoryName)? onCategoryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -56,59 +60,66 @@ class CategoryCarousel extends StatelessWidget {
                   // Quita márgenes externos para que el espacio lo controle el padre.
                   margin: EdgeInsets.zero,
                   // Stack permite superponer imagen, degradado y texto en la misma tarjeta.
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Carga la imagen local asociada a la categoría.
-                      GuideImage(imagePath: category.imagePath),
-                      DecoratedBox(
-                        // Agrega un degradado oscuro para mejorar la legibilidad del texto sobre la imagen.
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              colorScheme.scrim.withValues(alpha: 0.78),
-                            ],
+                  child: InkWell(
+                    onTap: onCategoryTap == null
+                        ? null
+                        : () async => await onCategoryTap!(category.name),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Carga la imagen local asociada a la categoría.
+                        GuideImage(imagePath: category.imagePath),
+                        DecoratedBox(
+                          // Agrega un degradado oscuro para mejorar la legibilidad del texto sobre la imagen.
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                colorScheme.scrim.withValues(alpha: 0.78),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      // Alinea el contenido textual en la parte inferior izquierda.
-                      Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Padding(
-                          // Añade espacio interno para que el texto y el icono no se peguen al borde.
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              // Icono representativo de la categoría.
-                              Icon(
-                                category.icon,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              // Espacio entre el icono y el nombre.
-                              const SizedBox(width: 8),
-
-                              // El nombre se muestra dentro de un Expanded para no desbordar la tarjeta.
-                              Expanded(
-                                child: Text(
-                                  category.name,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
+                        // Alinea el contenido textual en la parte inferior izquierda.
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: Padding(
+                            // Añade espacio interno para que el texto y el icono no se peguen al borde.
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                // Icono representativo de la categoría.
+                                Icon(
+                                  category.icon,
+                                  color: Colors.white,
+                                  size: 18,
                                 ),
-                              ),
-                            ],
+                                // Espacio entre el icono y el nombre.
+                                const SizedBox(width: 8),
+
+                                // El nombre se muestra dentro de un Expanded para no desbordar la tarjeta.
+                                Expanded(
+                                  child: Text(
+                                    category.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );

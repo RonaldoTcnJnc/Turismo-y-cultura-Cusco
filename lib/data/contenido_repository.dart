@@ -80,6 +80,30 @@ class ContenidoRepository {
     );
   }
 
+  Future<int> agregarFotoLugar(int lugarId, String rutaImagen) async {
+    if (rutaImagen.trim().isEmpty) {
+      throw ArgumentError.value(rutaImagen, 'rutaImagen', 'No puede estar vacía.');
+    }
+    final db = await _databaseHelper.database;
+    return db.insert('lugares_imagenes', {
+      'lugar_id': lugarId,
+      'ruta_imagen': rutaImagen,
+      'agregado_en': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<String>> listarFotosLugar(int lugarId) async {
+    final db = await _databaseHelper.database;
+    final rows = await db.query(
+      'lugares_imagenes',
+      columns: ['ruta_imagen'],
+      where: 'lugar_id = ?',
+      whereArgs: [lugarId],
+      orderBy: 'id ASC',
+    );
+    return rows.map((row) => row['ruta_imagen']! as String).toList();
+  }
+
   Future<int> eliminar(TipoContenido tipo, int id) async {
     final db = await _databaseHelper.database;
     return db.delete(tipo.tabla, where: 'id = ?', whereArgs: [id]);
@@ -124,6 +148,28 @@ class ContenidoRepository {
     distrito: distrito,
     mes: mes,
   )).cast<Festividad>();
+
+  Future<List<Festividad>> listarFestividadesProximas({DateTime? hoy}) async {
+    final date = hoy ?? DateTime.now();
+    final today = DateTime(date.year, date.month, date.day);
+    final events = await listarFestividades();
+    final occurrences = <({Festividad event, DateTime date})>[];
+
+    for (final event in events) {
+      final occurrence = _nextOccurrence(event, today);
+      if (occurrence != null) {
+        occurrences.add((event: event, date: occurrence));
+      }
+    }
+
+    occurrences.sort((first, second) {
+      final dateOrder = first.date.compareTo(second.date);
+      return dateOrder != 0
+          ? dateOrder
+          : first.event.nombre.compareTo(second.event.nombre);
+    });
+    return occurrences.map((occurrence) => occurrence.event).toList();
+  }
 
   Future<List<Plato>> listarPlatos({String? texto}) async =>
       (await listar(TipoContenido.plato, texto: texto)).cast<Plato>();

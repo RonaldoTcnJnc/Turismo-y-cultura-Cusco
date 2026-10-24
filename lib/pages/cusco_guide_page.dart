@@ -7,6 +7,7 @@ import '../models/contenido.dart';
 import '../models/festividad.dart';
 import '../navigation/route_arguments.dart';
 import '../services/preferencias_service.dart';
+import '../services/role_session.dart';
 import '../screens/favoritos_screen.dart';
 import '../utils/constantes.dart';
 import '../widgets/category_carousel.dart';
@@ -17,10 +18,16 @@ import '../widgets/repository_place_section.dart';
 import '../widgets/weekly_calendar.dart';
 
 class CuscoGuidePage extends StatefulWidget {
-  const CuscoGuidePage({this.repository, this.preferences, super.key});
+  const CuscoGuidePage({
+    this.repository,
+    this.preferences,
+    required this.roleSession,
+    super.key,
+  });
 
   final ContenidoRepository? repository;
   final PreferenciasService? preferences;
+  final RoleSession roleSession;
 
   @override
   State<CuscoGuidePage> createState() => _CuscoGuidePageState();
@@ -39,7 +46,7 @@ class _CuscoGuidePageState extends State<CuscoGuidePage> {
       preferences: widget.preferences,
     ),
     _AgendaTab(repository: widget.repository),
-    const _ProfileTab(),
+    _ProfileTab(roleSession: widget.roleSession),
   ];
 
   PreferenciasService get _preferences =>
@@ -131,13 +138,48 @@ class _ExploreTab extends StatefulWidget {
   State<_ExploreTab> createState() => _ExploreTabState();
 }
 
-class _ExploreTabState extends State<_ExploreTab> {
+class _ExploreTabState extends State<_ExploreTab> with WidgetsBindingObserver {
   Timer? _searchTimer;
+  Timer? _eventRefreshTimer;
   String _searchText = '';
   int _refreshVersion = 0;
+  int _eventRefreshVersion = 0;
+  late Future<Festividad?> _eventFuture;
 
   ContenidoRepository get _repository =>
       widget.repository ?? ContenidoRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _eventFuture = _repository.proximaFestividad(hoy: DateTime.now());
+    _scheduleEventRefresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshEvent();
+  }
+
+  void _scheduleEventRefresh() {
+    _eventRefreshTimer?.cancel();
+    final now = DateTime.now();
+    final nextDay = DateTime(now.year, now.month, now.day + 1);
+    _eventRefreshTimer = Timer(
+      nextDay.difference(now) + const Duration(milliseconds: 100),
+      _refreshEvent,
+    );
+  }
+
+  void _refreshEvent() {
+    if (!mounted) return;
+    setState(() {
+      _eventRefreshVersion++;
+      _eventFuture = _repository.proximaFestividad(hoy: DateTime.now());
+    });
+    _scheduleEventRefresh();
+  }
 
   void _onSearchChanged(String value) {
     _searchTimer?.cancel();
@@ -197,9 +239,22 @@ class _ExploreTabState extends State<_ExploreTab> {
     if (!mounted) return;
   }
 
+  Future<void> _openCarouselCategory(String categoryName) async {
+    final category = switch (categoryName) {
+      'Lugares' => TipoContenido.lugar,
+      'Festividades' || 'Tradiciones' => TipoContenido.festividad,
+      'Gastronomía' => TipoContenido.plato,
+      _ => null,
+    };
+    if (category == null) return;
+    await _openCategory(category);
+  }
+
   @override
   void dispose() {
     _searchTimer?.cancel();
+    _eventRefreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -223,7 +278,7 @@ class _ExploreTabState extends State<_ExploreTab> {
                   onMapTap: _openMap,
                 ),
                 const SizedBox(height: 32),
-                const CategoryCarousel(),
+                CategoryCarousel(onCategoryTap: _openCarouselCategory),
                 const SizedBox(height: 32),
                 FutureBuilder<List<int>>(
                   key: ValueKey('counts-$keySuffix'),
@@ -248,7 +303,24 @@ class _ExploreTabState extends State<_ExploreTab> {
                   },
                 ),
                 const SizedBox(height: 32),
-                const WeeklyCalendar(),
+                FutureBuilder<List<Festividad>>(
+                  future: _repository.listarFestividades(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SizedBox(
+                        height: 120,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (snapshot.hasError || !snapshot.hasData) {
+                      return const SizedBox.shrink();
+                    }
+                    return WeeklyCalendar(
+                      festivities: snapshot.data!,
+                      today: DateTime.now(),
+                    );
+                  },
+                ),
                 const SizedBox(height: 32),
                 RepositoryPlaceSection(
                   key: ValueKey('places-$keySuffix'),
@@ -281,8 +353,8 @@ class _ExploreTabState extends State<_ExploreTab> {
                 ),
                 const SizedBox(height: 32),
                 FutureBuilder<Festividad?>(
-                  key: ValueKey('event-$keySuffix'),
-                  future: _repository.proximaFestividad(),
+                  key: ValueKey('event-$keySuffix-$_eventRefreshVersion'),
+                  future: _eventFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
                       return const Center(
@@ -330,20 +402,66 @@ class _AgendaTab extends StatefulWidget {
   State<_AgendaTab> createState() => _AgendaTabState();
 }
 
-class _AgendaTabState extends State<_AgendaTab> {
+class _AgendaTabState extends State<_AgendaTab> with WidgetsBindingObserver {
   ContenidoRepository get _repository =>
       widget.repository ?? ContenidoRepository();
   late Future<List<Contenido>> _future;
+  Timer? _refreshTimer;
+
+  Future<List<Contenido>> _loadUpcoming() async =>
+      (await _repository.listarFestividadesProximas()).cast<Contenido>();
 
   @override
   void initState() {
     super.initState();
-    _future = (widget.repository ?? ContenidoRepository()).listarFestividades();
+    WidgetsBinding.instance.addObserver(this);
+    _future = _loadUpcoming();
+    _scheduleDailyRefresh();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _reload();
+      _scheduleDailyRefresh();
+    }
+  }
+
+  void _scheduleDailyRefresh() {
+    _refreshTimer?.cancel();
+    final now = DateTime.now();
+    final nextDay = DateTime(now.year, now.month, now.day + 1);
+    _refreshTimer = Timer(
+      nextDay.difference(now) + const Duration(milliseconds: 100),
+      () {
+        _reload();
+        _scheduleDailyRefresh();
+      },
+    );
   }
 
   void _reload() {
     if (!mounted) return;
-    setState(() => _future = _repository.listarFestividades());
+    setState(() {
+      _future = _loadUpcoming();
+    });
+  }
+
+  Future<void> _openAllFestivities() async {
+    await Navigator.pushNamed<void>(
+      context,
+      Rutas.kCategoria,
+      arguments: const CategoriaRouteArgs(TipoContenido.festividad),
+    );
+    if (!mounted) return;
+    _reload();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
@@ -352,9 +470,9 @@ class _AgendaTabState extends State<_AgendaTab> {
     child: RepositoryPlaceSection(
       tipo: TipoContenido.festividad,
       title: 'Festividades',
-      subtitle: 'Rituales, música y comunidad',
+      subtitle: 'Próximas celebraciones, ordenadas por fecha',
       future: _future,
-      onViewAll: _reload,
+      onViewAll: _openAllFestivities,
     ),
   );
 }
@@ -402,7 +520,9 @@ const Map<String, String> _defaultProfile = {
 };
 
 class _ProfileTab extends StatefulWidget {
-  const _ProfileTab();
+  const _ProfileTab({required this.roleSession});
+
+  final RoleSession roleSession;
 
   @override
   State<_ProfileTab> createState() => _ProfileTabState();
@@ -420,10 +540,16 @@ class _ProfileTabState extends State<_ProfileTab> {
   void initState() {
     super.initState();
     _future = Future.value(_defaultProfile);
+    widget.roleSession.addListener(_onRoleChanged);
+  }
+
+  void _onRoleChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    widget.roleSession.removeListener(_onRoleChanged);
     _nameController.dispose();
     _emailController.dispose();
     _cityController.dispose();
@@ -487,6 +613,45 @@ class _ProfileTabState extends State<_ProfileTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          'Modo de demostración',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        SegmentedButton<UserRole>(
+                          segments: const [
+                            ButtonSegment(
+                              value: UserRole.visitor,
+                              label: Text('Visitante'),
+                              icon: Icon(Icons.visibility_outlined),
+                            ),
+                            ButtonSegment(
+                              value: UserRole.collaborator,
+                              label: Text('Colaborador'),
+                              icon: Icon(Icons.edit_outlined),
+                            ),
+                          ],
+                          selected: {widget.roleSession.role},
+                          onSelectionChanged: (selection) =>
+                              widget.roleSession.selectRole(selection.first),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'El modo Colaborador habilita altas, edición y eliminación. '
+                          'La selección es local y no verifica identidad.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Row(
                           children: [
                             const CircleAvatar(
@@ -500,12 +665,16 @@ class _ProfileTabState extends State<_ProfileTab> {
                                 children: [
                                   Text(
                                     _nameController.text,
-                                    style: Theme.of(context).textTheme.titleLarge,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     _cityController.text,
-                                    style: Theme.of(context).textTheme.bodyMedium,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium,
                                   ),
                                 ],
                               ),
@@ -526,8 +695,8 @@ class _ProfileTabState extends State<_ProfileTab> {
                           ),
                           validator: (value) =>
                               (value == null || value.trim().isEmpty)
-                                  ? 'Ingresa tu nombre'
-                                  : null,
+                              ? 'Ingresa tu nombre'
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(

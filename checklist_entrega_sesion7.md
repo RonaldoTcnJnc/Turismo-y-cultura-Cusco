@@ -1,5 +1,11 @@
 # Checklist de entrega: Sesión 7
 
+## Aceptación del Proyecto 5
+
+- [x] El «Evento del mes» usa la fecha/hora local actual del dispositivo (`DateTime.now()`), calcula la próxima ocurrencia válida y muestra la fecha futura más cercana. Se recalcula al volver la app a primer plano y al comenzar un nuevo día local. «Más próxima» significa próxima fecha futura, no necesariamente dentro del mes calendario actual.
+- [x] Tocar una categoría del carrusel abre su listado: Lugares, Festividades y Gastronomía; Tradiciones abre Festividades.
+- [x] Agenda muestra próximas festividades; «VER TODO» abre la lista completa en formato de tarjetas, con búsqueda y filtros.
+
 ## Código y repositorio
 
 - [ ] Crear o verificar el repositorio con nombre exacto `dsii-sesion7-guia-cusco`.
@@ -12,8 +18,8 @@
 ## Revisión técnica
 
 - [x] `flutter pub get` termina correctamente.
-- [x] `flutter analyze` sin errores ni issues (verificado el 23 de octubre de 2026).
-- [x] `flutter test` pasa toda la suite (25 pruebas, verificado el 23 de octubre de 2026).
+- [x] `flutter analyze` sin errores ni issues (verificado el 24 de octubre de 2026).
+- [x] `flutter test` pasa toda la suite (39 pruebas, verificado el 24 de octubre de 2026).
 - [x] `flutter build apk --debug` termina correctamente (23 de octubre de 2026; con advertencias de toolchain Java/Gradle y API deprecada de geolocator).
 - [x] `flutter build web --debug` termina correctamente (23 de octubre de 2026).
 - [x] `flutter build linux --debug` termina correctamente (23 de octubre de 2026).
